@@ -1,4 +1,4 @@
-#----------------------------------------------------------------------------#
+5968#----------------------------------------------------------------------------#
 # Imports
 #----------------------------------------------------------------------------#
 
@@ -8,10 +8,13 @@ import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for
 from flask_moment import Moment
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import String, Column, Integer, Boolean, ARRAY, DateTime, ForeignKey
 import logging
 from logging import Formatter, FileHandler
-from flask_wtf import Form
+from flask_wtf import FlaskForm
 from forms import *
+from flask_migrate import Migrate
+import sys
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -20,6 +23,7 @@ app = Flask(__name__)
 moment = Moment(app)
 app.config.from_object('config')
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 # TODO: connect to a local postgresql database
 
@@ -36,6 +40,7 @@ class Venue(db.Model):
     state = db.Column(db.String(120))
     address = db.Column(db.String(120))
     phone = db.Column(db.String(120))
+    genres = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
 
@@ -60,6 +65,7 @@ class Artist(db.Model):
 #----------------------------------------------------------------------------#
 # Filters.
 #----------------------------------------------------------------------------#
+#db.create_all()
 
 def format_datetime(value, format='medium'):
   date = dateutil.parser.parse(value)
@@ -223,10 +229,41 @@ def create_venue_submission():
   # TODO: modify data to be the data object returned from db insertion
 
   # on successful db insert, flash success
-  flash('Venue ' + request.form['name'] + ' was successfully listed!')
+  # flash('Venue ' + request.form['name'] + ' was successfully listed!')
   # TODO: on unsuccessful db insert, flash an error instead.
   # e.g., flash('An error occurred. Venue ' + data.name + ' could not be listed.')
   # see: http://flask.pocoo.org/docs/1.0/patterns/flashing/
+  form = VenueForm()
+  error = False
+  try:
+    createVenue = Venue()
+    createVenue.name = request.form['name']
+    print(request.form['name'])
+    createVenue.city = request.form['city']
+    print(request.form['city'])
+    createVenue.state = request.form['state']
+    print(request.form['state'])
+    createVenue.address = request.form['address']
+    print(request.form['address'])
+    createVenue.phone = request.form['phone']
+    print(request.form['phone'])
+    createVemue.genres = request.form['genres']
+    print(request.form['genres'])
+    createVenue.facebook_link = request.form['facebook_link']
+    print(request.form['facebook_link'])
+    print(createVenue)
+    db.session.add(createVenue)
+    db.session.commit()
+  except:
+    error = True
+    db.session.rollback()
+    print(sys.exc_info())
+  finally:
+    db.session.close()
+  if error:
+    flash('Error occurred while creating Venue '+ request.form['name'])
+  else:
+    flash('Successfully created Venue '+ request.form['name'])
   return render_template('pages/home.html')
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
